@@ -1,6 +1,6 @@
 // Rate-limit en mémoire par IP — suffisant pour une seule instance Render.
 // Si le service passe un jour en plusieurs instances, remplacer par un
-// backend partagé (ex: table Supabase ou Redis).
+// backend partagé (ex: table Postgres ou Redis).
 import { getRequest } from "@tanstack/react-start/server";
 
 const hits = new Map<string, { count: number; resetAt: number }>();

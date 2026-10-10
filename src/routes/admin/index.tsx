@@ -2,8 +2,13 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 
-import { supabase } from "@/integrations/supabase/client";
-import { listReservations, updateReservationStatus } from "@/lib/admin.functions";
+import {
+  adminLogout,
+  getAdminSession,
+  listReservations,
+  updateReservationStatus,
+  type AdminReservation,
+} from "@/lib/admin.functions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,22 +31,7 @@ export const Route = createFileRoute("/admin/")({
   component: AdminDashboard,
 });
 
-type Reservation = {
-  id: string;
-  created_at: string;
-  trip_type: string;
-  pickup_address: string;
-  dropoff_address: string;
-  pickup_at: string;
-  vehicle_class: string;
-  full_name: string;
-  email: string;
-  phone: string;
-  estimated_price_cents: number | null;
-  payment_method: "cash" | "online";
-  stripe_payment_status: "unpaid" | "paid" | "refunded";
-  status: "pending" | "confirmed" | "completed" | "cancelled";
-};
+type Reservation = AdminReservation;
 
 const STATUS_VARIANT: Record<
   Reservation["status"],
@@ -57,6 +47,8 @@ function AdminDashboard() {
   const navigate = useNavigate();
   const fetchReservations = useServerFn(listReservations);
   const updateStatus = useServerFn(updateReservationStatus);
+  const fetchSession = useServerFn(getAdminSession);
+  const logout = useServerFn(adminLogout);
 
   const [ready, setReady] = useState(false);
   const [reservations, setReservations] = useState<Reservation[]>([]);
@@ -65,15 +57,15 @@ function AdminDashboard() {
   const reload = async () => {
     try {
       const data = await fetchReservations();
-      setReservations(data as Reservation[]);
+      setReservations(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur de chargement.");
     }
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) {
+    fetchSession().then(({ isAdmin }) => {
+      if (!isAdmin) {
         navigate({ to: "/admin/login" });
         return;
       }
@@ -96,7 +88,7 @@ function AdminDashboard() {
   };
 
   const onLogout = async () => {
-    await supabase.auth.signOut();
+    await logout();
     navigate({ to: "/admin/login" });
   };
 
@@ -136,13 +128,17 @@ function AdminDashboard() {
                   </TableCell>
                   <TableCell>
                     <div className="font-medium">{r.full_name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {r.email} · {r.phone}
-                    </div>
+                    <a className="text-xs text-muted-foreground" href={`tel:${r.phone}`}>
+                      {r.phone}
+                    </a>
                   </TableCell>
                   <TableCell className="max-w-xs">
                     <div className="text-sm">{r.pickup_address}</div>
                     <div className="text-xs text-muted-foreground">→ {r.dropoff_address}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {r.passengers} pass. · {r.luggage} bag.
+                      {r.notes ? ` · ${r.notes}` : ""}
+                    </div>
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
                     {new Date(r.pickup_at).toLocaleString("fr-FR")}

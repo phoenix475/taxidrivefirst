@@ -189,9 +189,7 @@ function BookingConsole({ preset }: { preset: { from: Place; to: Place; n: numbe
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
 
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [flightNumber, setFlightNumber] = useState("");
   const [notes, setNotes] = useState("");
 
   const pickupInputRef = useRef<HTMLInputElement>(null);
@@ -325,9 +323,7 @@ function BookingConsole({ preset }: { preset: { from: Place; to: Place; n: numbe
           luggage,
           vehicle_class: "van",
           full_name: fullName,
-          email,
           phone,
-          flight_number: flightNumber || null,
           notes: notes || null,
           payment_method: paymentMethod,
           pickup_lat: pickupCoords?.lat ?? null,
@@ -553,40 +549,16 @@ function BookingConsole({ preset }: { preset: { from: Place; to: Place; n: numbe
                 autoComplete="name"
               />
             </div>
-            <div className="row2">
-              <div className="field">
-                <label htmlFor="email">Email</label>
-                <input
-                  id="email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="marie@email.com"
-                  autoComplete="email"
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="phone">Téléphone</label>
-                <input
-                  id="phone"
-                  type="tel"
-                  required
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="06 12 34 56 78"
-                  autoComplete="tel"
-                />
-              </div>
-            </div>
             <div className="field">
-              <label htmlFor="flight">N° de vol ou de train (optionnel)</label>
+              <label htmlFor="phone">Téléphone</label>
               <input
-                id="flight"
-                type="text"
-                value={flightNumber}
-                onChange={(e) => setFlightNumber(e.target.value)}
-                placeholder="AF1234"
+                id="phone"
+                type="tel"
+                required
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="06 12 34 56 78"
+                autoComplete="tel"
               />
             </div>
             <div className="field">

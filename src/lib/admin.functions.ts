@@ -1,30 +1,73 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { enforceRateLimit } from "@/lib/rate-limit.server";
 
-async function requireAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-  if (error || !data) {
-    throw new Error("Accès réservé aux administrateurs.");
-  }
-}
+const loginSchema = z.object({ password: z.string().min(1).max(200) });
 
-export const listReservations = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await requireAdmin(context.supabase, context.userId);
+export const adminLogin = createServerFn({ method: "POST" })
+  .validator((data: unknown) => loginSchema.parse(data))
+  .handler(async ({ data }) => {
+    enforceRateLimit("adminLogin", 10, 15 * 60 * 1000);
 
-    const { data, error } = await context.supabase
-      .from("reservations")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) {
-      console.error("listReservations error", error);
-      throw new Error("Impossible de charger les réservations.");
+    const { checkAdminPassword, startAdminSession } = await import("@/lib/admin-auth.server");
+    if (!checkAdminPassword(data.password)) {
+      throw new Error("Mot de passe incorrect.");
     }
-    return data;
+    startAdminSession();
+    return { ok: true };
   });
+
+export const adminLogout = createServerFn({ method: "POST" }).handler(async () => {
+  const { endAdminSession } = await import("@/lib/admin-auth.server");
+  endAdminSession();
+  return { ok: true };
+});
+
+export const getAdminSession = createServerFn({ method: "GET" }).handler(async () => {
+  const { isAdmin } = await import("@/lib/admin-auth.server");
+  return { isAdmin: isAdmin() };
+});
+
+export type AdminReservation = {
+  id: string;
+  created_at: string;
+  trip_type: string;
+  pickup_address: string;
+  dropoff_address: string;
+  pickup_at: string;
+  passengers: number;
+  luggage: number;
+  vehicle_class: string;
+  full_name: string;
+  phone: string;
+  notes: string | null;
+  estimated_price_cents: number | null;
+  payment_method: "cash" | "online";
+  stripe_payment_status: "unpaid" | "paid" | "refunded";
+  status: "pending" | "confirmed" | "completed" | "cancelled";
+};
+
+export const listReservations = createServerFn({ method: "POST" }).handler(async () => {
+  const { requireAdmin } = await import("@/lib/admin-auth.server");
+  requireAdmin();
+
+  const { getSql } = await import("@/lib/db.server");
+  const sql = getSql();
+  const rows = await sql<AdminReservation[]>`
+    SELECT id, created_at, trip_type, pickup_address, dropoff_address, pickup_at,
+           passengers, luggage, vehicle_class, full_name, phone, notes,
+           estimated_price_cents, payment_method, stripe_payment_status, status
+    FROM reservations
+    ORDER BY created_at DESC
+    LIMIT 500
+  `;
+  return rows.map((r) => ({
+    ...r,
+    created_at: new Date(r.created_at).toISOString(),
+    pickup_at: new Date(r.pickup_at).toISOString(),
+  }));
+});
 
 const updateStatusSchema = z.object({
   id: z.string().uuid(),
@@ -32,69 +75,13 @@ const updateStatusSchema = z.object({
 });
 
 export const updateReservationStatus = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .validator((data: unknown) => updateStatusSchema.parse(data))
-  .handler(async ({ data, context }) => {
-    await requireAdmin(context.supabase, context.userId);
-
-    const { error } = await context.supabase
-      .from("reservations")
-      .update({ status: data.status })
-      .eq("id", data.id);
-    if (error) {
-      console.error("updateReservationStatus error", error);
-      throw new Error("Impossible de mettre à jour la réservation.");
-    }
-    return { ok: true };
-  });
-
-const bootstrapAdminSchema = z.object({
-  setupCode: z.string().min(1),
-  email: z.string().trim().email(),
-  password: z.string().min(8).max(72),
-});
-
-// Crée le tout premier compte admin. Se désactive automatiquement dès qu'un
-// admin existe déjà — ne peut donc pas servir de porte dérobée permanente.
-export const bootstrapAdmin = createServerFn({ method: "POST" })
-  .validator((data: unknown) => bootstrapAdminSchema.parse(data))
   .handler(async ({ data }) => {
-    const setupCode = process.env.ADMIN_SETUP_CODE;
-    if (!setupCode || data.setupCode !== setupCode) {
-      throw new Error("Code de configuration invalide.");
-    }
+    const { requireAdmin } = await import("@/lib/admin-auth.server");
+    requireAdmin();
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    const { count, error: countError } = await supabaseAdmin
-      .from("user_roles")
-      .select("id", { count: "exact", head: true })
-      .eq("role", "admin");
-    if (countError) {
-      console.error("bootstrapAdmin count error", countError);
-      throw new Error("Impossible de vérifier les administrateurs existants.");
-    }
-    if (count && count > 0) {
-      throw new Error("Un compte administrateur existe déjà.");
-    }
-
-    const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email: data.email,
-      password: data.password,
-      email_confirm: true,
-    });
-    if (createError || !created.user) {
-      console.error("bootstrapAdmin createUser error", createError);
-      throw new Error("Impossible de créer le compte administrateur.");
-    }
-
-    const { error: roleError } = await supabaseAdmin
-      .from("user_roles")
-      .insert({ user_id: created.user.id, role: "admin" });
-    if (roleError) {
-      console.error("bootstrapAdmin role error", roleError);
-      throw new Error("Compte créé mais impossible d'attribuer le rôle admin.");
-    }
-
+    const { getSql } = await import("@/lib/db.server");
+    const sql = getSql();
+    await sql`UPDATE reservations SET status = ${data.status} WHERE id = ${data.id}`;
     return { ok: true };
   });

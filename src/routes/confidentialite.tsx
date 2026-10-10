@@ -31,11 +31,10 @@ function Confidentialite() {
 
         <h2>Quelles données sont collectées ?</h2>
         <p>
-          Lorsque vous effectuez une réservation, nous collectons : votre nom, votre email, votre
-          téléphone, les adresses de départ et d'arrivée, la date et l'heure du trajet, et les
-          informations que vous nous donnez volontairement (numéro de vol, remarques). Ces données
-          sont nécessaires à l'exécution de votre course et sont stockées de façon sécurisée
-          (hébergement Supabase).
+          Lorsque vous effectuez une réservation, nous collectons : votre nom, votre téléphone, les
+          adresses de départ et d'arrivée, la date et l'heure du trajet, et les remarques que vous
+          nous donnez volontairement. Ces données sont nécessaires à l'exécution de votre course et
+          sont stockées de façon sécurisée (base de données hébergée par Render, en Allemagne).
         </p>
         <p>
           Les adresses saisies sont transmises à Google Maps pour proposer des suggestions et

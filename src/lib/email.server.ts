@@ -33,7 +33,6 @@ function escapeHtml(value: string): string {
 export async function sendReservationNotificationEmail(reservation: {
   id: string;
   full_name: string;
-  email: string;
   phone: string;
   pickup_address: string;
   dropoff_address: string;
@@ -42,7 +41,6 @@ export async function sendReservationNotificationEmail(reservation: {
   trip_type: string;
   passengers: number;
   luggage: number;
-  flight_number?: string | null;
   notes?: string | null;
   distance_km?: number | null;
   priceEuros: number;
@@ -86,13 +84,12 @@ export async function sendReservationNotificationEmail(reservation: {
   const html = `
     <h2>${title}</h2>
     <p><b>Référence :</b> ${reservation.id}</p>
-    <p><b>Client :</b> ${escapeHtml(reservation.full_name)} — ${escapeHtml(reservation.email)} — ${escapeHtml(reservation.phone)}</p>
+    <p><b>Client :</b> ${escapeHtml(reservation.full_name)} — ${escapeHtml(reservation.phone)}</p>
     <p><b>Trajet :</b> ${tripLabel}<br/>
     ${escapeHtml(reservation.pickup_address)} → ${escapeHtml(reservation.dropoff_address)}</p>
     <p><b>Prise en charge :</b> ${pickupDate}</p>
     ${reservation.return_at ? `<p><b>Retour :</b> ${formatDate(reservation.return_at)}</p>` : ""}
     <p><b>Passagers :</b> ${reservation.passengers} · <b>Bagages :</b> ${reservation.luggage}</p>
-    ${reservation.flight_number ? `<p><b>N° de vol :</b> ${escapeHtml(reservation.flight_number)}</p>` : ""}
     ${reservation.notes ? `<p><b>Notes :</b> ${escapeHtml(reservation.notes)}</p>` : ""}
     <p><b>Prix :</b> ${reservation.priceEuros} € · <b>Distance :</b> ${distanceLabel} · <b>Paiement :</b> ${paymentLabel}</p>
   `;

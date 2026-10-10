@@ -1,0 +1,1048 @@
+<title>TaxiDriveFirst</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: Paris la nuit. Un titre de signalétique routière, puis une console « carte + réservation » qui calcule le prix en direct ; le reste en bandes sobres. */
+:root {
+  color-scheme: dark;
+  --ink: #0D1015;
+  --surface: #141920;
+  --raise: #1B212A;
+  --line: #2A313C;
+  --fg: #ECE6DA;
+  --muted: #959CA8;
+  --amber: #E9A23B;
+  --amber-ink: #1A1206;
+  --amber-soft: rgba(233, 162, 59, 0.13);
+  --seine: rgba(110, 145, 190, 0.45);
+  --ok: #86C9A8;
+  --display: 'Big Shoulders Display', 'Arial Narrow', 'Roboto Condensed', sans-serif;
+  --body: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --radius: 14px;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  background: var(--ink);
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1200px; margin-inline: auto; padding-inline: 20px; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; border-radius: 6px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+p { margin: 0; }
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* Bandeau démo */
+.demo-bar {
+  background: var(--amber);
+  color: var(--amber-ink);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-align: center;
+  padding: 7px 16px;
+}
+
+/* Navigation */
+.nav {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 20;
+  background: rgba(13, 16, 21, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.nav .wrap { display: flex; align-items: center; gap: 28px; min-height: 64px; }
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.logo-mark { width: 34px; height: 34px; flex-shrink: 0; }
+.logo-word { font-family: var(--display); font-weight: 800; font-size: 1.55rem; letter-spacing: 0.04em; line-height: 1; text-transform: uppercase; }
+.logo-word span { color: var(--amber); }
+.nav-links { display: flex; gap: 24px; margin-left: auto; }
+.nav-links a { text-decoration: none; color: var(--muted); font-size: 0.92rem; font-weight: 500; transition: color .2s; }
+.nav-links a:hover { color: var(--fg); }
+.nav-phone { font-family: var(--mono); font-size: 0.85rem; color: var(--fg); white-space: nowrap; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: var(--body); font-weight: 700; font-size: 0.95rem;
+  border: 0; border-radius: 999px; cursor: pointer; text-decoration: none;
+  padding: 12px 22px; transition: transform .15s, background .2s, color .2s;
+}
+.btn-amber { background: var(--amber); color: var(--amber-ink); }
+.btn-amber:hover { transform: translateY(-1px); background: #F2B254; }
+.btn-ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+.btn-ghost:hover { border-color: var(--muted); }
+.btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+@media (max-width: 900px) { .nav-links { display: none; } .nav-phone { margin-left: auto; } }
+@media (max-width: 480px) { .nav-phone { display: none; } .nav .btn { margin-left: auto; padding: 10px 16px; } }
+
+/* Hero */
+.hero { padding-block: 28px 64px; position: relative; overflow: hidden; }
+.hero::before {
+  content: ""; position: absolute; inset: -40% -10% auto auto; width: 70%; height: 120%;
+  background: radial-gradient(closest-side, rgba(233,162,59,0.10), transparent 70%);
+  pointer-events: none;
+}
+.hero-head { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 40px; align-items: end; position: relative; }
+.hero h1 {
+  font-family: var(--display);
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: clamp(3.2rem, 9vw, 7.6rem);
+  line-height: 0.88;
+  letter-spacing: 0.005em;
+  margin-top: 18px;
+}
+.hero h1 .lit { color: var(--amber); display: block; }
+.hero-lede { color: var(--muted); font-size: 1.05rem; max-width: 46ch; }
+.hero-lede strong { color: var(--fg); font-weight: 600; }
+.facts { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 14px 26px; margin-top: 26px; padding-inline: 4px; }
+.fact { display: flex; flex-direction: column; }
+.fact b { font-family: var(--display); font-size: 1.7rem; font-weight: 700; line-height: 1.1; }
+.fact span { font-size: 0.8rem; color: var(--muted); }
+@media (max-width: 860px) { .hero-head { grid-template-columns: 1fr; gap: 22px; } }
+
+/* Console carte + réservation */
+#reserver { scroll-margin-top: 84px; }
+.console {
+  margin-top: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 40px 80px -40px rgba(0,0,0,0.7);
+}
+@media (max-width: 960px) { .console { grid-template-columns: 1fr; } }
+.map-panel { position: relative; min-height: 580px; border-right: 1px solid var(--line); }
+@media (max-width: 960px) { .map-panel { min-height: 0; aspect-ratio: 3 / 2; max-width: 100%; border-right: 0; border-bottom: 1px solid var(--line); } }
+#map { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.map-chip {
+  position: absolute; z-index: 2;
+  background: rgba(13,16,21,0.78);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(6px);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.map-chip.tl { top: 14px; left: 14px; }
+.map-chip.bl { bottom: 14px; left: 14px; display: flex; gap: 18px; }
+.map-chip b { display: block; color: var(--fg); font-size: 1rem; font-weight: 500; }
+.live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); margin-right: 6px; box-shadow: 0 0 0 3px rgba(134,201,168,0.2); }
+
+.booking { padding: 26px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.booking h1 { font-family: var(--display); font-weight: 700; font-size: 1.9rem; text-transform: uppercase; letter-spacing: 0.02em; line-height: 1; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field label, .legend { font-size: 0.72rem; font-family: var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.route-fields { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px 10px; align-items: end; }
+.route-fields .stack { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.swap {
+  width: 42px; height: 42px; border-radius: 50%;
+  border: 1px solid var(--line); background: var(--raise); color: var(--amber);
+  cursor: pointer; display: grid; place-items: center; margin-bottom: 26px;
+  transition: transform .3s, border-color .2s;
+}
+.swap:hover { border-color: var(--amber); transform: rotate(180deg); }
+select, input[type="date"], input[type="time"] {
+  width: 100%;
+  font: 500 0.95rem var(--body);
+  color: var(--fg);
+  background: var(--raise);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 11px 12px;
+  min-height: 46px;
+  transition: border-color .2s;
+}
+select {
+  appearance: none; -webkit-appearance: none;
+  padding-right: 36px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23E9A23B' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 13px center;
+}
+select:hover, input:hover { border-color: #3A4350; }
+.row3 { display: grid; grid-template-columns: minmax(0,1.3fr) minmax(0,1fr) minmax(0,0.8fr); gap: 10px; }
+@media (max-width: 440px) { .row3 { grid-template-columns: 1fr 1fr; } .row3 .field:first-child { grid-column: 1 / -1; } }
+
+.vehicles { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; border: 0; padding: 0; margin: 0; }
+.vehicles legend { margin-bottom: 6px; padding: 0; }
+.veh { position: relative; cursor: pointer; display: flex; }
+.veh input { position: absolute; opacity: 0; pointer-events: none; }
+.veh-body {
+  flex: 1;
+  display: flex; flex-direction: column; gap: 2px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--raise);
+  padding: 10px 11px;
+  transition: border-color .2s, background .2s;
+}
+.veh-name { font-weight: 700; font-size: 0.92rem; }
+.veh-cap { font-size: 0.72rem; color: var(--muted); }
+.veh-price { font-family: var(--mono); font-size: 1.05rem; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.veh input:checked + .veh-body { border-color: var(--amber); background: var(--amber-soft); }
+.veh input:checked + .veh-body .veh-price { color: var(--amber); }
+.veh input:focus-visible + .veh-body { outline: 2px solid var(--amber); outline-offset: 2px; }
+.veh input:disabled + .veh-body { opacity: .4; cursor: not-allowed; }
+
+.ticket {
+  border: 1px dashed #3A4350; border-radius: 12px;
+  padding: 14px 16px;
+  font-family: var(--mono); font-size: 0.8rem;
+  display: flex; flex-direction: column; gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.ticket .line { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); }
+.ticket .line span:last-child { color: var(--fg); text-align: right; }
+.ticket .total { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--line); padding-top: 10px; margin-top: 4px; }
+.ticket .total span:first-child { color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.72rem; }
+.ticket .total b { font-family: var(--display); font-size: 2.4rem; font-weight: 800; color: var(--amber); line-height: 1; }
+.tag { display: inline-block; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--amber-soft); color: var(--amber); }
+.form-note { font-size: 0.78rem; color: var(--muted); }
+.form-error { font-size: 0.85rem; color: var(--amber); }
+
+.confirm { padding: 32px 26px; display: flex; flex-direction: column; gap: 16px; justify-content: center; }
+.confirm .check { width: 52px; height: 52px; border-radius: 50%; background: rgba(134,201,168,0.15); color: var(--ok); display: grid; place-items: center; }
+.confirm h2 { font-family: var(--display); font-weight: 800; font-size: 2.4rem; text-transform: uppercase; line-height: 1; }
+.confirm .ref { font-family: var(--mono); color: var(--amber); }
+.confirm p { color: var(--muted); }
+.confirm .recap { color: var(--fg); font-weight: 600; }
+
+/* Sections */
+section.band { padding-block: 88px; border-top: 1px solid var(--line); }
+.section-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 18px 40px; margin-bottom: 40px; }
+.section-head h2 {
+  font-family: var(--display); font-weight: 800; text-transform: uppercase;
+  font-size: clamp(2.3rem, 5.2vw, 3.8rem); line-height: 0.92; margin-top: 10px;
+}
+.section-head p { color: var(--muted); max-width: 46ch; }
+
+/* Forfaits */
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); }
+table { width: 100%; border-collapse: collapse; min-width: 620px; }
+th, td { text-align: left; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+tr:last-child td { border-bottom: 0; }
+thead th { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 400; background: var(--surface); }
+td.trajet { font-weight: 600; }
+td.price { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 1.02rem; }
+td.price.hl { color: var(--amber); }
+th.r, td.r { text-align: right; }
+tbody tr { transition: background .2s; }
+tbody tr:hover { background: var(--surface); }
+.link-btn { background: none; border: 0; color: var(--amber); font: 600 0.85rem var(--body); cursor: pointer; padding: 4px 0; white-space: nowrap; }
+.link-btn:hover { text-decoration: underline; }
+.table-note { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 16px; font-size: 0.82rem; color: var(--muted); }
+.table-note span::before { content: "— "; color: var(--amber); }
+
+/* Flotte */
+.fleet { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 48px; align-items: center; }
+@media (max-width: 860px) { .fleet { grid-template-columns: 1fr; gap: 28px; } }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 26px; }
+.tab {
+  font: 700 0.9rem var(--body); color: var(--muted);
+  background: transparent; border: 1px solid var(--line); border-radius: 999px;
+  padding: 9px 18px; cursor: pointer; transition: all .2s;
+}
+.tab[aria-selected="true"] { background: var(--fg); color: var(--ink); border-color: var(--fg); }
+.tab:hover:not([aria-selected="true"]) { color: var(--fg); border-color: var(--muted); }
+.fleet-name { font-family: var(--display); font-weight: 800; font-size: clamp(2.6rem, 6vw, 4.4rem); text-transform: uppercase; line-height: 0.9; }
+.fleet-model { color: var(--muted); margin-top: 8px; }
+.specs { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0; margin: 26px 0; border-top: 1px solid var(--line); }
+.specs div { padding: 14px 0; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; }
+.specs div:nth-child(odd) { padding-right: 16px; }
+.specs dt { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.specs dd { margin: 0; font-weight: 600; }
+.specs dd.num { font-weight: 500; }
+.fleet-visual {
+  background: radial-gradient(ellipse at 50% 85%, rgba(233,162,59,0.16), transparent 60%), var(--surface);
+  border: 1px solid var(--line); border-radius: 20px;
+  padding: 40px 28px; display: flex; flex-direction: column; justify-content: center; gap: 18px;
+  min-height: 320px;
+}
+.fleet-visual svg { width: 100%; height: auto; max-width: 100%; }
+.fleet-extras { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.fleet-extras span { font-size: 0.78rem; border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; color: var(--muted); }
+.car-draw path, .car-draw circle, .car-draw line { transition: opacity .4s; }
+@keyframes draw { from { stroke-dashoffset: 1200; } to { stroke-dashoffset: 0; } }
+.car-draw .body { stroke-dasharray: 1200; animation: draw 1.6s cubic-bezier(.6,0,.2,1) both; }
+@media (prefers-reduced-motion: reduce) { .car-draw .body { animation: none; stroke-dasharray: none; } }
+
+/* Déroulé */
+.steps { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 0; border-top: 1px solid var(--line); }
+@media (max-width: 900px) { .steps { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+@media (max-width: 520px) { .steps { grid-template-columns: 1fr; } }
+.step { padding: 26px 24px 8px 0; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.step-n { font-family: var(--display); font-weight: 800; font-size: 3.4rem; line-height: 1; color: transparent; -webkit-text-stroke: 1px var(--amber); }
+.step h3 { font-size: 1.05rem; font-weight: 700; }
+.step p { color: var(--muted); font-size: 0.93rem; }
+
+/* Services */
+.services { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+@media (max-width: 720px) { .services { grid-template-columns: 1fr; } }
+.service { background: var(--ink); padding: 30px 28px; display: flex; flex-direction: column; gap: 10px; transition: background .25s; }
+.service:hover { background: var(--surface); }
+.service-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.service h3 { font-family: var(--display); font-weight: 700; font-size: 1.7rem; text-transform: uppercase; line-height: 1.05; }
+.service .from { font-family: var(--mono); font-size: 0.8rem; color: var(--amber); white-space: nowrap; }
+.service p { color: var(--muted); font-size: 0.95rem; max-width: 52ch; }
+
+/* FAQ */
+.faq { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 48px; }
+@media (max-width: 860px) { .faq { grid-template-columns: 1fr; gap: 10px; } }
+details { border-bottom: 1px solid var(--line); }
+details:first-of-type { border-top: 1px solid var(--line); }
+summary {
+  list-style: none; cursor: pointer; padding: 20px 0;
+  display: flex; justify-content: space-between; gap: 20px; align-items: center;
+  font-weight: 600; font-size: 1.02rem;
+}
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; font-family: var(--mono); color: var(--amber); font-size: 1.3rem; transition: transform .25s; flex-shrink: 0; }
+details[open] summary::after { transform: rotate(45deg); }
+details p { color: var(--muted); padding-bottom: 20px; max-width: 62ch; }
+
+/* CTA */
+.cta { padding-block: 96px; border-top: 1px solid var(--line); position: relative; overflow: hidden; }
+.cta::before { content: ""; position: absolute; inset: auto -20% -60% -20%; height: 120%; background: radial-gradient(closest-side, rgba(233,162,59,0.12), transparent); pointer-events: none; }
+.cta .wrap { position: relative; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 30px; }
+.cta h2 { font-family: var(--display); font-weight: 800; text-transform: uppercase; font-size: clamp(2.6rem, 7vw, 5.6rem); line-height: 0.88; }
+.cta h2 span { color: var(--amber); }
+.cta-actions { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.phone-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.phone-big { font-family: var(--mono); font-size: 1.5rem; user-select: all; }
+.copy-btn { font: 600 0.78rem var(--body); color: var(--muted); background: var(--raise); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+.copy-btn:hover { color: var(--fg); }
+
+footer { border-top: 1px solid var(--line); padding-block: 36px 48px; color: var(--muted); font-size: 0.85rem; }
+footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px 40px; }
+footer .cols { display: flex; flex-wrap: wrap; gap: 8px 28px; }
+footer .disclaimer { flex-basis: 100%; font-family: var(--mono); font-size: 0.72rem; border-top: 1px solid var(--line); padding-top: 18px; }
+
+@media (max-width: 600px) {
+  section.band { padding-block: 64px; }
+  .hero { padding-block: 36px 56px; }
+  .booking { padding: 20px; }
+  .vehicles { grid-template-columns: 1fr; }
+  .veh-body { flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .veh-price { margin-top: 0; }
+}
+</style>
+
+<div class="demo-bar">MAQUETTE DE DÉMONSTRATION · nom, tarifs et contenus indicatifs, à personnaliser</div>
+
+<nav class="nav" aria-label="Navigation principale">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="TaxiDriveFirst, accueil">
+      <svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="10" fill="#E9A23B"/><path d="M7 35 L17 6 L23 6 L33 35 Z" fill="#0D1015"/><path d="M20 9.5v2.5M20 15.5v4M20 23.5v7" stroke="#E9A23B" stroke-width="2.2" stroke-linecap="round"/></svg>
+      <span class="logo-word">TaxiDrive<span>First</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="#forfaits">Forfaits</a>
+      <a href="#flotte">Flotte</a>
+      <a href="#services">Services</a>
+      <a href="#faq">Questions</a>
+    </div>
+    <span class="nav-phone">01 23 45 67 89</span>
+    <a class="btn btn-amber" href="#reserver">Réserver</a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <div class="console" id="reserver">
+      <div class="map-panel">
+        <canvas id="map" aria-label="Carte de l'itinéraire estimé entre le départ et l'arrivée" role="img"></canvas>
+        <div class="map-chip tl"><span class="live-dot"></span>Itinéraire estimé</div>
+        <div class="map-chip bl">
+          <div>Distance<b id="chip-km" class="num">–</b></div>
+          <div>Durée<b id="chip-min" class="num">–</b></div>
+        </div>
+      </div>
+
+      <form class="booking" id="booking" novalidate>
+        <div>
+          <div class="eyebrow">Estimation immédiate</div>
+          <h1 style="margin-top:6px">Votre trajet</h1>
+        </div>
+
+        <div class="route-fields">
+          <div class="stack">
+            <div class="field">
+              <label for="from">Départ</label>
+              <select id="from" name="from"></select>
+            </div>
+            <div class="field">
+              <label for="to">Arrivée</label>
+              <select id="to" name="to"></select>
+            </div>
+          </div>
+          <button type="button" class="swap" id="swap" aria-label="Inverser départ et arrivée">
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 2v12M5 14l-3-3M5 14l3-3M11 14V2M11 2L8 5M11 2l3 3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="row3">
+          <div class="field">
+            <label for="date">Date</label>
+            <input type="date" id="date" name="date">
+          </div>
+          <div class="field">
+            <label for="time">Heure</label>
+            <input type="time" id="time" name="time" value="08:30" step="300">
+          </div>
+          <div class="field">
+            <label for="pax">Passagers</label>
+            <select id="pax" name="pax">
+              <option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option>
+            </select>
+          </div>
+        </div>
+
+        <fieldset class="vehicles" id="vehicles">
+          <legend class="legend">Véhicule</legend>
+        </fieldset>
+
+        <div class="ticket" id="ticket" aria-live="polite"></div>
+        <p class="form-error" id="form-error" hidden></p>
+
+        <button type="submit" class="btn btn-amber" id="submit">Demander cette course</button>
+        <p class="form-note">Sans engagement. Annulation gratuite jusqu'à 24 h avant la prise en charge.</p>
+      </form>
+
+      <div class="confirm" id="confirm" hidden>
+        <div class="check"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="eyebrow">Demande reçue</div>
+        <h2>C'est noté.</h2>
+        <p class="recap" id="recap"></p>
+        <p>Référence <span class="ref" id="ref"></span>. La veille du trajet, vous recevez par SMS le nom de votre chauffeur, le modèle du véhicule et sa plaque.</p>
+        <p class="form-note">Ceci est une maquette : aucune demande n'a été envoyée.</p>
+        <div><button type="button" class="btn btn-ghost" id="edit">Modifier la demande</button></div>
+      </div>
+    </div>
+    <div class="facts">
+      <div class="fact"><b class="num">60 min</b><span>d'attente offerte à l'aéroport</span></div>
+      <div class="fact"><b class="num">0 €</b><span>de supplément si votre vol a du retard</span></div>
+      <div class="fact"><b class="num">Prix fixe</b><span>connu avant de réserver</span></div>
+      <div class="fact"><b class="num">24h/24</b><span>Paris &amp; Île-de-France</span></div>
+    </div>
+  </div>
+</header>
+
+<section class="band" id="forfaits">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Forfaits</div>
+        <h2>Les trajets les plus demandés,<br>à prix fixe.</h2>
+      </div>
+      <p>Jour, nuit, embouteillages sur l'A1 ou neige : le montant affiché est celui que vous payez. Péages compris.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Trajet</th><th class="r">Berline</th><th class="r">Van</th><th class="r">Prestige</th><th class="r"><span style="position:absolute;left:-9999px">Action</span></th></tr>
+        </thead>
+        <tbody id="forfait-rows"></tbody>
+      </table>
+    </div>
+    <div class="table-note">
+      <span>Prix TTC par trajet, pour le véhicule entier</span>
+      <span>Attente offerte : 60 min aéroports, 15 min gares</span>
+      <span>Siège enfant fourni sur demande, sans supplément</span>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="flotte">
+  <div class="wrap fleet">
+    <div>
+      <div class="eyebrow">La flotte</div>
+      <div class="tabs" role="tablist" aria-label="Catégories de véhicules" style="margin-top:16px" id="tabs"></div>
+      <div id="fleet-info" role="tabpanel"></div>
+    </div>
+    <div class="fleet-visual" id="fleet-visual"></div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Comment ça se passe</div>
+        <h2>De la réservation<br>à la portière.</h2>
+      </div>
+      <p>Chaque étape est confirmée par écrit. Vous n'avez jamais à rappeler pour savoir où en est votre course.</p>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="step-n">1</div><h3>Vous réservez</h3><p>En ligne ou par téléphone. Le prix ferme s'affiche avant la validation.</p></div>
+      <div class="step"><div class="step-n">2</div><h3>Confirmation par SMS</h3><p>La veille : nom du chauffeur, modèle du véhicule, plaque d'immatriculation.</p></div>
+      <div class="step"><div class="step-n">3</div><h3>Prise en charge</h3><p>À l'aéroport, accueil en zone arrivées avec une pancarte. Votre vol est suivi en temps réel.</p></div>
+      <div class="step"><div class="step-n">4</div><h3>Paiement</h3><p>Carte bancaire à bord, ou facture mensuelle pour les comptes entreprise.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="services">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Services</div>
+        <h2>Un chauffeur pour<br>chaque occasion.</h2>
+      </div>
+    </div>
+    <div class="services">
+      <article class="service">
+        <div class="service-top"><h3>Aéroports &amp; gares</h3><span class="from">dès 60 €</span></div>
+        <p>CDG, Orly, Beauvais et toutes les gares parisiennes. Suivi du vol ou du train, attente incluse, aide aux bagages.</p>
+      </article>
+      <article class="service">
+        <div class="service-top"><h3>Mise à disposition</h3><span class="from">dès 65 € / h</span></div>
+        <p>Un chauffeur et son véhicule pour la demi-journée ou la journée : rendez-vous successifs, shopping, visites.</p>
+      </article>
+      <article class="service">
+        <div class="service-top"><h3>Entreprises</h3><span class="from">compte pro</span></div>
+        <p>Plusieurs collaborateurs, une seule facture mensuelle. Accueil de vos clients et partenaires à l'aéroport.</p>
+      </article>
+      <article class="service">
+        <div class="service-top"><h3>Mariages &amp; événements</h3><span class="from">sur devis</span></div>
+        <p>Classe prestige, chauffeur en tenue, décoration du véhicule sur demande. Navettes pour vos invités en van.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="faq">
+  <div class="wrap faq">
+    <div>
+      <div class="eyebrow">Questions</div>
+      <div class="section-head" style="margin-bottom:0"><h2>Avant de<br>réserver.</h2></div>
+    </div>
+    <div>
+      <details open>
+        <summary>Que se passe-t-il si mon vol a du retard ?</summary>
+        <p>Votre chauffeur suit votre vol et adapte l'heure de prise en charge. Le retard ne vous est pas facturé, et les 60 minutes d'attente offertes commencent à l'atterrissage réel.</p>
+      </details>
+      <details>
+        <summary>Puis-je annuler ma réservation ?</summary>
+        <p>Oui, gratuitement jusqu'à 24 h avant la prise en charge. Au-delà, 50 % du montant est retenu.</p>
+      </details>
+      <details>
+        <summary>Combien de bagages puis-je emporter ?</summary>
+        <p>3 valises en berline, 7 en van, 2 en prestige. Pour des skis, une poussette ou un vélo, précisez-le à la réservation.</p>
+      </details>
+      <details>
+        <summary>Les chauffeurs sont-ils des professionnels agréés ?</summary>
+        <p>Tous nos chauffeurs sont titulaires de la carte professionnelle VTC et inscrits au registre des VTC. Les véhicules sont assurés pour le transport de personnes et entretenus chaque mois.</p>
+      </details>
+      <details>
+        <summary>Comment payer ?</summary>
+        <p>Par carte bancaire à bord, ou par virement sur facture pour les entreprises. Une facture est envoyée par e-mail après chaque course.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="wrap">
+    <h2>Un départ<br>demain matin ?<br><span>On s'en occupe.</span></h2>
+    <div class="cta-actions">
+      <a class="btn btn-amber" href="#reserver">Estimer mon trajet</a>
+      <div class="phone-line">
+        <span class="phone-big" id="phone">01 23 45 67 89</span>
+        <button type="button" class="copy-btn" id="copy">Copier</button>
+      </div>
+      <span class="form-note">Réservation par téléphone 7j/7, de 6 h à 23 h</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span class="logo"><svg class="logo-mark" style="width:26px;height:26px" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="10" fill="#E9A23B"/><path d="M7 35 L17 6 L23 6 L33 35 Z" fill="#0D1015"/><path d="M20 9.5v2.5M20 15.5v4M20 23.5v7" stroke="#E9A23B" stroke-width="2.2" stroke-linecap="round"/></svg><span class="logo-word" style="font-size:1.15rem;color:var(--fg)">TaxiDrive<span>First</span></span><span style="margin-left:6px">· Chauffeur privé, Paris</span></span>
+    <div class="cols">
+      <span>Mentions légales</span>
+      <span>CGV</span>
+      <span>SIRET à compléter</span>
+      <span>contact@exemple.fr</span>
+    </div>
+    <p class="disclaimer">Maquette réalisée pour présentation. Nom, numéro, tarifs et conditions sont des exemples non contractuels.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  const $ = (s) => document.querySelector(s);
+  const eur = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+  const eur2 = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const PLACES = [
+    { id: 'opera', name: 'Paris · Opéra', short: 'Opéra', zone: 'paris', group: 'Paris', lat: 48.8719, lon: 2.3316 },
+    { id: 'eiffel', name: 'Paris · Tour Eiffel', short: 'Tour Eiffel', zone: 'paris', group: 'Paris', lat: 48.8584, lon: 2.2945 },
+    { id: 'marais', name: 'Paris · Le Marais', short: 'Marais', zone: 'paris', group: 'Paris', lat: 48.8590, lon: 2.3620 },
+    { id: 'gdl', name: 'Gare de Lyon', short: 'Gare de Lyon', zone: 'paris', group: 'Gares', lat: 48.8443, lon: 2.3744 },
+    { id: 'gdn', name: 'Gare du Nord', short: 'Gare du Nord', zone: 'paris', group: 'Gares', lat: 48.8809, lon: 2.3553 },
+    { id: 'cdg', name: 'Aéroport Charles-de-Gaulle', short: 'CDG', zone: 'cdg', group: 'Aéroports', lat: 49.0097, lon: 2.5479 },
+    { id: 'ory', name: "Aéroport d'Orly", short: 'Orly', zone: 'ory', group: 'Aéroports', lat: 48.7262, lon: 2.3652 },
+    { id: 'defense', name: 'La Défense', short: 'La Défense', zone: 'defense', group: 'Île-de-France', lat: 48.8919, lon: 2.2381 },
+    { id: 'versailles', name: 'Château de Versailles', short: 'Versailles', zone: 'versailles', group: 'Île-de-France', lat: 48.8049, lon: 2.1204 },
+    { id: 'disney', name: 'Disneyland Paris', short: 'Disneyland', zone: 'disney', group: 'Île-de-France', lat: 48.8722, lon: 2.7758 }
+  ];
+  const byId = Object.fromEntries(PLACES.map((p) => [p.id, p]));
+
+  const VEH = {
+    berline: { name: 'Berline', model: 'Mercedes Classe E ou équivalent', pax: 3, bags: 3, base: 8, km: 2.1, min: 0.45, minimum: 25, hour: 65, extras: ['Eau fraîche', 'Chargeurs USB-C', 'Wi-Fi à bord'], shape: 'sedan' },
+    van: { name: 'Van', model: 'Mercedes Classe V ou équivalent', pax: 7, bags: 7, base: 12, km: 2.6, min: 0.55, minimum: 40, hour: 80, extras: ['Sièges face à face', 'Grand coffre', 'Sièges enfant'], shape: 'van' },
+    prestige: { name: 'Prestige', model: 'Mercedes Classe S ou équivalent', pax: 3, bags: 2, base: 18, km: 3.4, min: 0.8, minimum: 60, hour: 110, extras: ['Sellerie cuir', 'Presse du jour', 'Chauffeur en costume'], shape: 'long' }
+  };
+
+  const FORFAITS = [
+    { a: 'paris', b: 'cdg', label: 'Paris ↔ Aéroport CDG', p: { berline: 75, van: 95, prestige: 140 }, from: 'opera', to: 'cdg' },
+    { a: 'paris', b: 'ory', label: "Paris ↔ Aéroport d'Orly", p: { berline: 60, van: 80, prestige: 115 }, from: 'opera', to: 'ory' },
+    { a: 'cdg', b: 'ory', label: 'CDG ↔ Orly', p: { berline: 95, van: 120, prestige: 170 }, from: 'cdg', to: 'ory' },
+    { a: 'paris', b: 'disney', label: 'Paris ↔ Disneyland Paris', p: { berline: 85, van: 105, prestige: 150 }, from: 'opera', to: 'disney' },
+    { a: 'paris', b: 'versailles', label: 'Paris ↔ Versailles', p: { berline: 65, van: 85, prestige: 120 }, from: 'eiffel', to: 'versailles' },
+    { a: 'paris', b: 'defense', label: 'Paris ↔ La Défense', p: { berline: 40, van: 55, prestige: 80 }, from: 'opera', to: 'defense' }
+  ];
+
+  // ---------- Calcul ----------
+  function roadKm(a, b) {
+    const R = 6371, rad = Math.PI / 180;
+    const dLat = (b.lat - a.lat) * rad, dLon = (b.lon - a.lon) * rad;
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(h)) * 1.35;
+  }
+  function forfaitFor(a, b) {
+    return FORFAITS.find((f) => (f.a === a.zone && f.b === b.zone) || (f.a === b.zone && f.b === a.zone));
+  }
+  function isNight(hour) { return hour >= 22 || hour < 6; }
+  function quote(a, b, key, hour) {
+    const v = VEH[key];
+    const d = roadKm(a, b);
+    let speed = (hour >= 7 && hour < 10) || (hour >= 17 && hour < 20) ? 20 : isNight(hour) ? 40 : 28;
+    if (d > 12) speed *= 1.7;
+    const mins = Math.max(8, Math.round((d / speed) * 60) + 4);
+    const f = forfaitFor(a, b);
+    if (f) return { total: f.p[key], d, mins, forfait: f };
+    const parts = { base: v.base, km: d * v.km, min: mins * v.min };
+    let t = parts.base + parts.km + parts.min;
+    const night = isNight(hour);
+    if (night) t *= 1.15;
+    const total = Math.max(v.minimum, Math.ceil(t));
+    return { total, d, mins, parts, night, minimumApplied: total === v.minimum };
+  }
+
+  // ---------- Formulaire ----------
+  const fromSel = $('#from'), toSel = $('#to'), paxSel = $('#pax'), dateIn = $('#date'), timeIn = $('#time');
+  function fillSelect(sel, selected) {
+    const groups = {};
+    PLACES.forEach((p) => { (groups[p.group] = groups[p.group] || []).push(p); });
+    Object.entries(groups).forEach(([g, list]) => {
+      const og = document.createElement('optgroup');
+      og.label = g;
+      list.forEach((p) => {
+        const o = document.createElement('option');
+        o.value = p.id; o.textContent = p.name;
+        if (p.id === selected) o.selected = true;
+        og.appendChild(o);
+      });
+      sel.appendChild(og);
+    });
+  }
+  fillSelect(fromSel, 'opera');
+  fillSelect(toSel, 'cdg');
+
+  const pad = (n) => String(n).padStart(2, '0');
+  const isoDate = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  const today = new Date();
+  const tomorrow = new Date(today.getTime() + 86400000);
+  dateIn.min = isoDate(today);
+  dateIn.value = isoDate(tomorrow);
+
+  const vehWrap = $('#vehicles');
+  Object.entries(VEH).forEach(([key, v], i) => {
+    const l = document.createElement('label');
+    l.className = 'veh';
+    l.innerHTML = '<input type="radio" name="veh" id="veh-' + key + '" value="' + key + '"' + (i === 0 ? ' checked' : '') + '>' +
+      '<span class="veh-body"><span class="veh-name">' + v.name + '</span>' +
+      '<span class="veh-cap" data-cap>' + v.pax + ' pass. · ' + v.bags + ' bagages</span>' +
+      '<span class="veh-price" data-price>–</span></span>';
+    vehWrap.appendChild(l);
+  });
+
+  function selectedVeh() { const r = document.querySelector('input[name="veh"]:checked'); return r ? r.value : 'berline'; }
+  function hourOf() { const v = timeIn.value || '08:30'; return parseInt(v.split(':')[0], 10) || 0; }
+
+  let current = null;
+  function update() {
+    const a = byId[fromSel.value], b = byId[toSel.value];
+    const hour = hourOf();
+    const pax = parseInt(paxSel.value, 10);
+    const err = $('#form-error');
+    const ticket = $('#ticket');
+    const submit = $('#submit');
+
+    if (a.id === b.id) {
+      err.textContent = 'Choisissez une arrivée différente du départ.';
+      err.hidden = false;
+      submit.disabled = true;
+      ticket.hidden = true;
+      vehWrap.querySelectorAll('[data-price]').forEach((el) => { el.textContent = '–'; });
+      $('#chip-km').textContent = '–';
+      $('#chip-min').textContent = '–';
+      map.setRoute(a, a);
+      current = null;
+      return;
+    }
+    err.hidden = true;
+    ticket.hidden = false;
+
+    // Prix par véhicule + capacité
+    let firstOk = null;
+    Object.keys(VEH).forEach((key) => {
+      const input = $('#veh-' + key);
+      const body = input.nextElementSibling;
+      const ok = pax <= VEH[key].pax;
+      input.disabled = !ok;
+      body.querySelector('[data-cap]').textContent = ok ? VEH[key].pax + ' pass. · ' + VEH[key].bags + ' bagages' : 'Max ' + VEH[key].pax + ' passagers';
+      body.querySelector('[data-price]').textContent = eur.format(quote(a, b, key, hour).total);
+      if (ok && !firstOk) firstOk = key;
+    });
+    const selInput = document.querySelector('input[name="veh"]:checked');
+    if (!selInput || selInput.disabled) $('#veh-' + firstOk).checked = true;
+
+    const key = selectedVeh();
+    const q = quote(a, b, key, hour);
+    current = { a, b, key, q };
+    submit.disabled = false;
+
+    const lines = [];
+    lines.push(['Trajet', a.short + ' → ' + b.short]);
+    lines.push(['Distance estimée', Math.round(q.d) + ' km']);
+    lines.push(['Durée estimée', q.mins + ' min']);
+    if (q.forfait) {
+      lines.push(['Tarif', '<span class="tag">Forfait fixe</span>']);
+      lines.push(['Péages et attente', 'inclus']);
+    } else {
+      lines.push(['Prise en charge', eur2.format(q.parts.base)]);
+      lines.push(['Distance × ' + eur2.format(VEH[key].km) + '/km', eur2.format(q.parts.km)]);
+      lines.push(['Temps × ' + eur2.format(VEH[key].min) + '/min', eur2.format(q.parts.min)]);
+      if (q.night) lines.push(['Majoration nuit (22 h–6 h)', '+15 %']);
+      if (q.minimumApplied) lines.push(['Course minimum', eur.format(VEH[key].minimum)]);
+    }
+    ticket.innerHTML = lines.map((l) => '<div class="line"><span>' + l[0] + '</span><span>' + l[1] + '</span></div>').join('') +
+      '<div class="total"><span>Prix ' + (q.forfait ? 'fixe' : 'estimé') + ' TTC</span><b>' + eur.format(q.total) + '</b></div>';
+
+    $('#chip-km').textContent = Math.round(q.d) + ' km';
+    $('#chip-min').textContent = q.mins + ' min';
+    map.setRoute(a, b);
+  }
+
+  [fromSel, toSel, paxSel, dateIn, timeIn].forEach((el) => el.addEventListener('input', update));
+  vehWrap.addEventListener('change', update);
+  $('#swap').addEventListener('click', () => {
+    const f = fromSel.value; fromSel.value = toSel.value; toSel.value = f; update();
+  });
+
+  const form = $('#booking'), confirmBox = $('#confirm');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!current) return;
+    const d = new Date(dateIn.value + 'T' + (timeIn.value || '08:30'));
+    const when = isNaN(d) ? '' : d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) + ' à ' + (timeIn.value || '08:30').replace(':', ' h ');
+    $('#recap').textContent = VEH[current.key].name + ' · ' + current.a.short + ' → ' + current.b.short + ' · ' + when + ' · ' + eur.format(current.q.total);
+    $('#ref').textContent = 'TDF-' + Math.floor(1000 + Math.random() * 9000);
+    form.hidden = true;
+    confirmBox.hidden = false;
+  });
+  $('#edit').addEventListener('click', () => { confirmBox.hidden = true; form.hidden = false; });
+
+  // ---------- Forfaits ----------
+  const rows = $('#forfait-rows');
+  FORFAITS.forEach((f, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td class="trajet">' + f.label + '</td>' +
+      '<td class="price r hl">' + eur.format(f.p.berline) + '</td>' +
+      '<td class="price r">' + eur.format(f.p.van) + '</td>' +
+      '<td class="price r">' + eur.format(f.p.prestige) + '</td>' +
+      '<td class="r"><button type="button" class="link-btn" data-i="' + i + '">Réserver →</button></td>';
+    rows.appendChild(tr);
+  });
+  rows.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-i]');
+    if (!btn) return;
+    const f = FORFAITS[+btn.dataset.i];
+    fromSel.value = f.from; toSel.value = f.to;
+    confirmBox.hidden = true; form.hidden = false;
+    update();
+    $('#reserver').scrollIntoView({ block: 'start' });
+  });
+
+  // ---------- Flotte ----------
+  const SHAPES = {
+    sedan: { body: 'M24 104 L24 86 Q26 74 44 70 L112 62 Q142 34 178 30 L252 30 Q288 32 318 60 L366 68 Q386 72 386 88 L386 104', win: ['M128 62 Q152 42 180 39 L212 39 L212 62 Z', 'M220 39 L250 39 Q276 41 298 62 L220 62 Z'], wheels: [100, 310] },
+    long: { body: 'M14 104 L14 86 Q16 74 34 70 L108 62 Q140 32 180 28 L270 28 Q308 30 338 60 L380 68 Q396 72 396 88 L396 104', win: ['M124 62 Q150 40 182 37 L218 37 L218 62 Z', 'M226 37 L262 37 Q290 39 316 62 L226 62 Z'], wheels: [92, 326] },
+    van: { body: 'M20 104 L20 74 Q22 62 40 56 L70 46 Q86 26 112 22 L352 22 Q376 22 380 42 L384 104', win: ['M92 50 Q100 32 118 30 L170 30 L170 50 Z', 'M178 30 L250 30 L250 50 L178 50 Z', 'M258 30 L340 30 Q360 30 362 44 L362 50 L258 50 Z'], wheels: [100, 316] }
+  };
+  function carSVG(shape) {
+    const s = SHAPES[shape];
+    const wheels = s.wheels.map((x) => '<circle cx="' + x + '" cy="104" r="22" fill="#141920" stroke="#ECE6DA" stroke-width="2"/><circle cx="' + x + '" cy="104" r="9" fill="none" stroke="#E9A23B" stroke-width="1.5"/>').join('');
+    return '<svg class="car-draw" viewBox="0 0 410 140" role="img" aria-label="Silhouette du véhicule">' +
+      '<ellipse cx="205" cy="128" rx="190" ry="6" fill="#000" fill-opacity=".45"/>' +
+      '<path class="body" d="' + s.body + ' Z" fill="#1B212A" stroke="#ECE6DA" stroke-width="2" stroke-linejoin="round"/>' +
+      s.win.map((w) => '<path d="' + w + '" fill="#E9A23B" fill-opacity=".14" stroke="#E9A23B" stroke-opacity=".6" stroke-width="1.2"/>').join('') +
+      '<line x1="40" y1="88" x2="370" y2="88" stroke="#ECE6DA" stroke-opacity=".18" stroke-width="1"/>' +
+      '<path d="M370 76 L384 78" stroke="#E9A23B" stroke-width="4" stroke-linecap="round"/>' +
+      wheels + '</svg>';
+  }
+  const tabs = $('#tabs');
+  Object.entries(VEH).forEach(([key, v], i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'tab'; b.setAttribute('role', 'tab'); b.id = 'tab-' + key;
+    b.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+    b.textContent = v.name; b.dataset.key = key;
+    tabs.appendChild(b);
+  });
+  function showFleet(key) {
+    const v = VEH[key];
+    tabs.querySelectorAll('.tab').forEach((t) => t.setAttribute('aria-selected', t.dataset.key === key ? 'true' : 'false'));
+    $('#fleet-info').innerHTML =
+      '<div class="fleet-name">' + v.name + '</div>' +
+      '<p class="fleet-model">' + v.model + '</p>' +
+      '<dl class="specs">' +
+      '<div><dt>Passagers</dt><dd class="num">' + v.pax + '</dd></div>' +
+      '<div><dt>Bagages</dt><dd class="num">' + v.bags + ' valises</dd></div>' +
+      '<div><dt>Au kilomètre</dt><dd class="num">' + eur2.format(v.km) + '</dd></div>' +
+      '<div><dt>Mise à disposition</dt><dd class="num">' + eur.format(v.hour) + ' / h</dd></div>' +
+      '</dl>' +
+      '<button type="button" class="btn btn-amber" id="pick">Choisir ce véhicule</button>';
+    $('#fleet-visual').innerHTML = carSVG(v.shape) +
+      '<div class="fleet-extras">' + v.extras.map((x) => '<span>' + x + '</span>').join('') + '</div>';
+    $('#pick').addEventListener('click', () => {
+      const pax = parseInt(paxSel.value, 10);
+      if (pax > v.pax) paxSel.value = String(v.pax);
+      $('#veh-' + key).checked = true;
+      confirmBox.hidden = true; form.hidden = false;
+      update();
+      $('#reserver').scrollIntoView({ block: 'start' });
+    });
+  }
+  tabs.addEventListener('click', (e) => { const t = e.target.closest('.tab'); if (t) showFleet(t.dataset.key); });
+  showFleet('berline');
+
+  // ---------- Copier le numéro ----------
+  $('#copy').addEventListener('click', () => {
+    const btn = $('#copy');
+    const txt = $('#phone').textContent;
+    const done = () => { btn.textContent = 'Copié'; setTimeout(() => { btn.textContent = 'Copier'; }, 1600); };
+    const fallback = () => {
+      const r = document.createRange(); r.selectNodeContents($('#phone'));
+      const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      btn.textContent = 'Sélectionné';
+    };
+    try { navigator.clipboard.writeText(txt).then(done, fallback); } catch (e) { fallback(); }
+  });
+
+  // ---------- Carte ----------
+  function makeMap(canvas) {
+    const ctx = canvas.getContext('2d');
+    const css = getComputedStyle(document.documentElement);
+    const C = {
+      surface: css.getPropertyValue('--surface').trim() || '#141920',
+      fg: css.getPropertyValue('--fg').trim() || '#ECE6DA',
+      muted: css.getPropertyValue('--muted').trim() || '#959CA8',
+      amber: css.getPropertyValue('--amber').trim() || '#E9A23B',
+      seine: css.getPropertyValue('--seine').trim() || 'rgba(110,145,190,.45)'
+    };
+    const B = { lonMin: 2.06, lonMax: 2.84, latMin: 48.69, latMax: 49.04 };
+    const cosL = Math.cos(48.86 * Math.PI / 180);
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let W = 0, H = 0, s = 1, ox = 0, oy = 0, dpr = 1;
+    let base = null;
+    let A = null, Bp = null, start = 0, raf = 0;
+
+    const proj = (lon, lat) => [ox + (lon - B.lonMin) * cosL * s, oy + (B.latMax - lat) * s];
+
+    // Rues générées de façon déterministe
+    function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+    const R = rng(11);
+    const center = [2.347, 48.858];
+    const arterials = [], streets = [];
+    for (let i = 0; i < 16; i++) {
+      const ang = (i / 16) * Math.PI * 2 + R() * 0.2;
+      const pts = [];
+      let r = 0.01, a = ang;
+      while (r < 0.5) { a += (R() - 0.5) * 0.12; pts.push([center[0] + Math.cos(a) * r / cosL, center[1] + Math.sin(a) * r]); r += 0.02 + R() * 0.02; }
+      arterials.push(pts);
+    }
+    for (let i = 0; i < 420; i++) {
+      const rr = Math.pow(R(), 1.7) * 0.32;
+      const a = R() * Math.PI * 2;
+      const x = center[0] + Math.cos(a) * rr / cosL, y = center[1] + Math.sin(a) * rr;
+      const dir = R() * Math.PI;
+      const len = 0.004 + R() * 0.018;
+      streets.push([[x, y], [x + Math.cos(dir) * len / cosL, y + Math.sin(dir) * len]]);
+    }
+    const SEINE = [[2.46, 48.79], [2.43, 48.81], [2.40, 48.825], [2.375, 48.838], [2.355, 48.85], [2.34, 48.857], [2.32, 48.861], [2.30, 48.861], [2.285, 48.853], [2.27, 48.843], [2.245, 48.838], [2.228, 48.85], [2.226, 48.872], [2.24, 48.89], [2.265, 48.905], [2.295, 48.922], [2.315, 48.935], [2.30, 48.952], [2.265, 48.955], [2.22, 48.94], [2.18, 48.925], [2.14, 48.91], [2.10, 48.92], [2.07, 48.94]];
+
+    function drawBase() {
+      base = document.createElement('canvas');
+      base.width = W * dpr; base.height = H * dpr;
+      const b = base.getContext('2d');
+      // dessin sur le calque statique
+      b.scale(dpr, dpr);
+      b.fillStyle = C.surface; b.fillRect(0, 0, W, H);
+      b.lineCap = 'round';
+      b.strokeStyle = 'rgba(236,230,218,0.055)'; b.lineWidth = 1;
+      streets.forEach((st) => { const p1 = proj(st[0][0], st[0][1]), p2 = proj(st[1][0], st[1][1]); b.beginPath(); b.moveTo(p1[0], p1[1]); b.lineTo(p2[0], p2[1]); b.stroke(); });
+      b.strokeStyle = 'rgba(236,230,218,0.09)'; b.lineWidth = 1.2;
+      arterials.forEach((pts) => { b.beginPath(); pts.forEach((q, i) => { const p = proj(q[0], q[1]); i ? b.lineTo(p[0], p[1]) : b.moveTo(p[0], p[1]); }); b.stroke(); });
+      // Périphérique
+      const c = proj(2.347, 48.857);
+      b.strokeStyle = 'rgba(236,230,218,0.2)'; b.lineWidth = 1.6; b.setLineDash([2, 4]);
+      b.beginPath(); b.ellipse(c[0], c[1], 0.088 * cosL * s, 0.042 * s, -0.12, 0, Math.PI * 2); b.stroke();
+      b.setLineDash([]);
+      // Seine
+      b.strokeStyle = C.seine; b.lineWidth = Math.max(2, s * 0.0016); b.lineJoin = 'round';
+      b.beginPath(); smoothPathOn(b, SEINE); b.stroke();
+      b.font = '10px ' + getComputedStyle(document.body).getPropertyValue('--mono');
+      b.fillStyle = 'rgba(110,145,190,0.75)';
+      const sl = proj(2.268, 48.905); b.fillText('Seine', sl[0] + 6, sl[1]);
+      b.fillStyle = 'rgba(236,230,218,0.32)';
+      const pl = proj(2.347, 48.857 - 0.046); b.textAlign = 'center'; b.fillText('BD PÉRIPHÉRIQUE', pl[0], pl[1] + 12); b.textAlign = 'start';
+    }
+    function smoothPathOn(c2, pts) {
+      const p = pts.map((q) => proj(q[0], q[1]));
+      c2.moveTo(p[0][0], p[0][1]);
+      for (let i = 1; i < p.length - 1; i++) {
+        const mx = (p[i][0] + p[i + 1][0]) / 2, my = (p[i][1] + p[i + 1][1]) / 2;
+        c2.quadraticCurveTo(p[i][0], p[i][1], mx, my);
+      }
+      const last = p[p.length - 1]; c2.lineTo(last[0], last[1]);
+    }
+
+    function resize() {
+      const r = canvas.getBoundingClientRect();
+      W = Math.max(1, r.width); H = Math.max(1, r.height);
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = W * dpr; canvas.height = H * dpr;
+      const padX = 22, padY = 22;
+      const mw = (B.lonMax - B.lonMin) * cosL, mh = B.latMax - B.latMin;
+      s = Math.min((W - padX * 2) / mw, (H - padY * 2) / mh);
+      ox = (W - mw * s) / 2; oy = (H - mh * s) / 2;
+      drawBase();
+      frame(performance.now());
+    }
+
+    function ctrl(a, b) {
+      const dx = b[0] - a[0], dy = b[1] - a[1];
+      return [(a[0] + b[0]) / 2 - dy * 0.22, (a[1] + b[1]) / 2 + dx * 0.22];
+    }
+    function qpt(a, c, b, t) {
+      const u = 1 - t;
+      return [u * u * a[0] + 2 * u * t * c[0] + t * t * b[0], u * u * a[1] + 2 * u * t * c[1] + t * t * b[1]];
+    }
+    const ease = (t) => 1 - Math.pow(1 - t, 3);
+
+    function frame(now) {
+      if (!base) return;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.drawImage(base, 0, 0);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const mono = getComputedStyle(document.body).getPropertyValue('--mono');
+
+      // Lieux
+      PLACES.forEach((p) => {
+        const q = proj(p.lon, p.lat);
+        const active = (A && p.id === A.id) || (Bp && p.id === Bp.id);
+        ctx.fillStyle = active ? C.fg : 'rgba(236,230,218,0.45)';
+        ctx.beginPath(); ctx.arc(q[0], q[1], active ? 0 : 2.4, 0, Math.PI * 2); ctx.fill();
+        ctx.font = (active ? '500 12px ' : '10px ') + mono;
+        ctx.fillStyle = active ? C.fg : 'rgba(149,156,168,0.85)';
+        const right = q[0] < W - 90;
+        ctx.textAlign = right ? 'left' : 'right';
+        ctx.fillText(p.short.toUpperCase(), q[0] + (right ? 9 : -9), q[1] + 4);
+      });
+      ctx.textAlign = 'start';
+
+      if (A && Bp && A.id !== Bp.id) {
+        const a = proj(A.lon, A.lat), b = proj(Bp.lon, Bp.lat), c = ctrl(a, b);
+        const t = reduce ? 1 : Math.min(1, (now - start) / 1300);
+        const prog = ease(t);
+        const N = 80;
+        // halo
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.strokeStyle = 'rgba(233,162,59,0.18)'; ctx.lineWidth = 9;
+        ctx.beginPath();
+        for (let i = 0; i <= N * prog; i++) { const p = qpt(a, c, b, i / N); i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); }
+        ctx.stroke();
+        ctx.strokeStyle = C.amber; ctx.lineWidth = 2.6;
+        ctx.stroke();
+
+        // départ
+        ctx.strokeStyle = C.fg; ctx.lineWidth = 2; ctx.fillStyle = C.surface;
+        ctx.beginPath(); ctx.arc(a[0], a[1], 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        // arrivée
+        if (prog >= 1) {
+          const pulse = reduce ? 0 : ((now - start) % 1800) / 1800;
+          ctx.strokeStyle = 'rgba(233,162,59,' + (0.6 * (1 - pulse)) + ')'; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.arc(b[0], b[1], 7 + pulse * 18, 0, Math.PI * 2); ctx.stroke();
+        }
+        ctx.fillStyle = C.amber;
+        ctx.beginPath(); ctx.arc(b[0], b[1], 6.5 * Math.min(1, prog * 1.2), 0, Math.PI * 2); ctx.fill();
+
+        // voiture
+        let u;
+        if (prog < 1) u = prog;
+        else u = reduce ? 0.55 : (((now - start - 1300) % 5200) / 5200);
+        const p = qpt(a, c, b, ease(u));
+        ctx.fillStyle = C.fg;
+        ctx.shadowColor = 'rgba(233,162,59,0.9)'; ctx.shadowBlur = 14;
+        ctx.beginPath(); ctx.arc(p[0], p[1], 4.2, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+      } else if (A) {
+        const a = proj(A.lon, A.lat);
+        ctx.strokeStyle = C.fg; ctx.lineWidth = 2; ctx.fillStyle = C.surface;
+        ctx.beginPath(); ctx.arc(a[0], a[1], 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      }
+    }
+
+    function loop(now) { frame(now); raf = requestAnimationFrame(loop); }
+
+    if ('ResizeObserver' in window) new ResizeObserver(resize).observe(canvas);
+    else window.addEventListener('resize', resize);
+
+    return {
+      setRoute(a, b) {
+        const changed = !A || !Bp || A.id !== a.id || Bp.id !== b.id;
+        A = a; Bp = b;
+        if (changed) start = performance.now();
+        if (!base) resize();
+        if (reduce) { frame(performance.now()); return; }
+        if (!raf) raf = requestAnimationFrame(loop);
+      }
+    };
+  }
+
+  const map = makeMap($('#map'));
+  update();
+})();
+</script>

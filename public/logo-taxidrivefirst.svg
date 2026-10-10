@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 56" width="600" height="112">
+  <rect width="300" height="56" fill="#0D1015"/>
+  <g transform="translate(8 8)"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F7C873"/><stop offset="1" stop-color="#D88F2E"/></linearGradient></defs><rect width="40" height="40" rx="10" fill="url(#g1)"/><path d="M10.5 29.5 Q11.5 12 29.5 10.5" fill="none" stroke="#0D1015" stroke-width="3.4" stroke-linecap="round"/><circle cx="29.5" cy="10.5" r="6.4" fill="none" stroke="#0D1015" stroke-opacity=".35" stroke-width="1.2"/><circle cx="29.5" cy="10.5" r="3.8" fill="#0D1015"/><circle cx="10.5" cy="29.5" r="3.8" fill="#F2B254" stroke="#0D1015" stroke-width="2.4"/></g>
+  <text x="60" y="38" font-family="'Big Shoulders Display','Arial Narrow',sans-serif" font-weight="800" font-size="30" letter-spacing="1.2" fill="#ECE6DA">TAXIDRIVE<tspan fill="#E9A23B">FIRST</tspan></text>
+</svg>

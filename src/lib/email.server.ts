@@ -1,13 +1,8 @@
-// Helper email côté serveur — appel REST direct à l'API Resend (pas de SDK
-// npm), même approche que stripe.server.ts. Import uniquement depuis du code
-// serveur (handlers de createServerFn, routes API serveur).
+// Email au chauffeur à chaque réservation, via FormSubmit (formsubmit.co) :
+// aucun compte ni clé API. Au tout premier envoi, FormSubmit envoie un lien
+// d'activation à NOTIFICATION_EMAIL ; les emails partent dès qu'il est cliqué.
+// Import uniquement depuis du code serveur (handlers de createServerFn, routes API serveur).
 import process from "node:process";
-
-function getResendApiKey(): string {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) throw new Error("Configuration manquante: RESEND_API_KEY.");
-  return key;
-}
 
 // Adresse qui reçoit chaque nouvelle réservation (le chauffeur / l'exploitant).
 function getNotificationEmail(): string {
@@ -16,18 +11,9 @@ function getNotificationEmail(): string {
   return to;
 }
 
-function getFromEmail(): string {
-  // onboarding@resend.dev fonctionne sans domaine vérifié sur Resend.
-  return process.env.RESEND_FROM_EMAIL || "TaxiDriveFirst <onboarding@resend.dev>";
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+// FormSubmit refuse les envois sans site d'origine.
+function getSiteUrl(): string {
+  return process.env.SITE_URL || "https://taxidrivefirst.fr";
 }
 
 export async function sendReservationNotificationEmail(reservation: {
@@ -48,69 +34,70 @@ export async function sendReservationNotificationEmail(reservation: {
   // sur Stripe (pas encore payé). online_paid : Stripe a confirmé le paiement.
   payment: "cash" | "online_pending" | "online_paid";
 }): Promise<void> {
-  const tripLabel = reservation.trip_type === "round_trip" ? "Aller-retour" : "Aller simple";
   const formatDate = (value: string) =>
     new Date(value).toLocaleString("fr-FR", {
-      dateStyle: "long",
+      dateStyle: "full",
       timeStyle: "short",
       timeZone: "Europe/Paris",
     });
-  const pickupDate = formatDate(reservation.pickup_at);
-  const distanceLabel =
-    reservation.distance_km == null
-      ? "non calculée"
-      : reservation.trip_type === "round_trip"
-        ? `${reservation.distance_km} km par trajet (${Math.round(reservation.distance_km * 200) / 100} km facturés)`
-        : `${reservation.distance_km} km`;
 
-  const { title, paymentLabel, subjectPrefix } = {
+  const { paymentLabel, subjectPrefix } = {
     cash: {
-      title: "Nouvelle réservation TaxiDriveFirst (paiement sur place)",
-      paymentLabel: "sur place",
-      subjectPrefix: "Nouvelle réservation",
+      paymentLabel: "Sur place (à bord)",
+      subjectPrefix: "Nouvelle course",
     },
     online_pending: {
-      title: "Nouvelle réservation TaxiDriveFirst (paiement en ligne en attente)",
-      paymentLabel: "en ligne — PAS ENCORE PAYÉ, le client est sur la page Stripe",
-      subjectPrefix: "Nouvelle réservation (paiement en attente)",
+      paymentLabel: "En ligne — PAS ENCORE PAYÉ, le client est sur la page Stripe",
+      subjectPrefix: "Nouvelle course (paiement en attente)",
     },
     online_paid: {
-      title: "Paiement en ligne confirmé ✅",
-      paymentLabel: "en ligne — PAYÉ via Stripe",
+      paymentLabel: "En ligne — PAYÉ via Stripe",
       subjectPrefix: "Paiement confirmé",
     },
   }[reservation.payment];
 
-  const html = `
-    <h2>${title}</h2>
-    <p><b>Référence :</b> ${reservation.id}</p>
-    <p><b>Client :</b> ${escapeHtml(reservation.full_name)} — ${escapeHtml(reservation.phone)}</p>
-    <p><b>Trajet :</b> ${tripLabel}<br/>
-    ${escapeHtml(reservation.pickup_address)} → ${escapeHtml(reservation.dropoff_address)}</p>
-    <p><b>Prise en charge :</b> ${pickupDate}</p>
-    ${reservation.return_at ? `<p><b>Retour :</b> ${formatDate(reservation.return_at)}</p>` : ""}
-    <p><b>Passagers :</b> ${reservation.passengers} · <b>Bagages :</b> ${reservation.luggage}</p>
-    ${reservation.notes ? `<p><b>Notes :</b> ${escapeHtml(reservation.notes)}</p>` : ""}
-    <p><b>Prix :</b> ${reservation.priceEuros} € · <b>Distance :</b> ${distanceLabel} · <b>Paiement :</b> ${paymentLabel}</p>
-  `;
+  const pickupDate = formatDate(reservation.pickup_at);
+  const siteUrl = getSiteUrl();
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${getResendApiKey()}`,
-      "Content-Type": "application/json",
+  // Les clés deviennent les lignes du tableau dans l'email (template "table").
+  const fields: Record<string, string> = {
+    _subject: `${subjectPrefix} — ${pickupDate} — ${reservation.priceEuros} €`,
+    _template: "table",
+    _captcha: "false",
+    Client: reservation.full_name,
+    Téléphone: reservation.phone,
+    Départ: reservation.pickup_address,
+    Arrivée: reservation.dropoff_address,
+    "Prise en charge": pickupDate,
+    Passagers: String(reservation.passengers),
+    Bagages: String(reservation.luggage),
+    Distance: reservation.distance_km == null ? "non calculée" : `${reservation.distance_km} km`,
+    Prix: `${reservation.priceEuros} €`,
+    Paiement: paymentLabel,
+    Référence: reservation.id.slice(0, 8).toUpperCase(),
+    "Voir toutes les courses": `${siteUrl}/admin`,
+  };
+  if (reservation.return_at) fields.Retour = formatDate(reservation.return_at);
+  if (reservation.notes) fields.Remarques = reservation.notes;
+
+  const response = await fetch(
+    `https://formsubmit.co/ajax/${encodeURIComponent(getNotificationEmail())}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Origin: siteUrl,
+        Referer: `${siteUrl}/`,
+      },
+      body: JSON.stringify(fields),
     },
-    body: JSON.stringify({
-      from: getFromEmail(),
-      to: getNotificationEmail(),
-      subject: `${subjectPrefix} — ${reservation.full_name}`,
-      html,
-    }),
-  });
+  );
 
-  if (!response.ok) {
-    const json = await response.json().catch(() => null);
-    console.error("Resend API error", json);
+  const json = await response.json().catch(() => null);
+  // FormSubmit répond 200 même en cas d'échec : le vrai résultat est dans `success`.
+  if (!response.ok || String(json?.success) !== "true") {
+    console.error("FormSubmit error", response.status, json);
     throw new Error("Échec de l'envoi de l'email de notification.");
   }
 }

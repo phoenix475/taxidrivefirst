@@ -89,7 +89,7 @@ function ReservationConfirmee() {
                 Référence <span className="ref">{summary.id.slice(0, 8).toUpperCase()}</span>.{" "}
                 {payment === "cancelled"
                   ? "Votre réservation reste enregistrée en attente de paiement."
-                  : "La veille du trajet, vous recevez par SMS le nom de votre chauffeur, le modèle du véhicule et sa plaque."}
+                  : "Votre chauffeur vous appelle pour confirmer l'heure et le lieu de prise en charge."}
               </p>
             </>
           )}

@@ -27,11 +27,6 @@ const eur = new Intl.NumberFormat("fr-FR", {
   currency: "EUR",
   maximumFractionDigits: 0,
 });
-const eur2 = new Intl.NumberFormat("fr-FR", {
-  style: "currency",
-  currency: "EUR",
-  minimumFractionDigits: 2,
-});
 
 type Place = { address: string; short: string; lat: number; lng: number };
 
@@ -159,6 +154,12 @@ function Home() {
 type PaymentMethod = "cash" | "online";
 type Coords = { lat: number; lng: number };
 
+// Entrée sert à choisir une suggestion Google, pas à valider le formulaire
+// (sinon il part avant la fin du calcul de la distance).
+const preventEnterSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  if (e.key === "Enter") e.preventDefault();
+};
+
 const pad = (n: number) => String(n).padStart(2, "0");
 const isoDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
@@ -266,7 +267,6 @@ function BookingConsole({ preset }: { preset: { from: Place; to: Place; n: numbe
   const price = distance
     ? calculatePrice({ vehicleClass: "van", tripType: "one_way", distanceKm: distance.distanceKm })
     : null;
-  const minimumApplied = price != null && price === PRICING.van.minimumFare;
 
   const pickupAt = () => {
     const d = new Date(`${date}T${time || "08:30"}`);
@@ -348,12 +348,7 @@ function BookingConsole({ preset }: { preset: { from: Place; to: Place; n: numbe
     ? [
         ["Distance (Google Maps)", `${Math.round(distance.distanceKm)} km`],
         ["Durée estimée", `${distance.durationMinutes} min`],
-        minimumApplied
-          ? ["Tarif", <span className="tag">Course minimum</span>]
-          : [
-              `Distance × ${eur2.format(PRICING.van.perKm)}/km`,
-              eur2.format(distance.distanceKm * PRICING.van.perKm),
-            ],
+        ["Tarif", <span className="tag">Prix fixe, tout compris</span>],
       ]
     : [];
 
@@ -403,6 +398,7 @@ function BookingConsole({ preset }: { preset: { from: Place; to: Place; n: numbe
                     setPickup(e.target.value);
                     setPickupCoords(null);
                   }}
+                  onKeyDown={preventEnterSubmit}
                   placeholder="Adresse, gare, aéroport…"
                   autoComplete="off"
                 />
@@ -418,6 +414,7 @@ function BookingConsole({ preset }: { preset: { from: Place; to: Place; n: numbe
                     setDropoff(e.target.value);
                     setDropoffCoords(null);
                   }}
+                  onKeyDown={preventEnterSubmit}
                   placeholder="Hôtel, adresse, aéroport…"
                   autoComplete="off"
                 />
@@ -628,7 +625,7 @@ function Tarifs({ onPick }: { onPick: (from: string, to: string) => void }) {
           <div>
             <div className="eyebrow">Tarifs</div>
             <h2>
-              Un prix au kilomètre,
+              Un prix fixe,
               <br />
               connu d'avance.
             </h2>
@@ -640,12 +637,12 @@ function Tarifs({ onPick }: { onPick: (from: string, to: string) => void }) {
         </div>
         <div className="tariffs">
           <div className="tariff">
-            <b className="num">{eur2.format(PRICING.van.perKm)}</b>
-            <span>par kilomètre</span>
+            <b>Prix fixe</b>
+            <span>annoncé avant de réserver, sans compteur ni surprise</span>
           </div>
           <div className="tariff">
-            <b className="num">{eur.format(PRICING.van.minimumFare)}</b>
-            <span>course minimum, pour les trajets de moins de 10 km</span>
+            <b className="num">Dès {eur.format(PRICING.van.minimumFare)}</b>
+            <span>pour toute course dans Paris et l'Île-de-France</span>
           </div>
           <div className="tariff">
             <b className="num">0 €</b>
@@ -716,12 +713,12 @@ function Flotte() {
                 <dd className="num">{VAN.bags} valises</dd>
               </div>
               <div>
-                <dt>Au kilomètre</dt>
-                <dd className="num">{eur2.format(PRICING.van.perKm)}</dd>
+                <dt>Disponibilité</dt>
+                <dd className="num">24h/24</dd>
               </div>
               <div>
-                <dt>Course minimum</dt>
-                <dd className="num">{eur.format(PRICING.van.minimumFare)}</dd>
+                <dt>Tarif</dt>
+                <dd className="num">Dès {eur.format(PRICING.van.minimumFare)}</dd>
               </div>
             </dl>
             <a className="btn btn-amber" href="#reserver">
@@ -776,8 +773,8 @@ function Deroule() {
   const steps = [
     ["Vous réservez", "En ligne ou par téléphone. Le prix ferme s'affiche avant la validation."],
     [
-      "Confirmation par SMS",
-      "La veille : nom du chauffeur, modèle du véhicule, plaque d'immatriculation.",
+      "Appel du chauffeur",
+      "Votre chauffeur vous contacte par téléphone pour confirmer l'heure et le lieu de prise en charge.",
     ],
     [
       "Prise en charge",
@@ -797,8 +794,8 @@ function Deroule() {
             </h2>
           </div>
           <p>
-            Chaque étape est confirmée par écrit. Vous n'avez jamais à rappeler pour savoir où en
-            est votre course.
+            Votre chauffeur vous contacte directement. Vous n'avez jamais à rappeler pour savoir où
+            en est votre course.
           </p>
         </div>
         <div className="steps">
@@ -877,7 +874,7 @@ function Faq() {
     ],
     [
       "Comment est calculé le prix ?",
-      `${eur2.format(PRICING.van.perKm)} par kilomètre sur la distance routière calculée par Google Maps, avec une course minimum de ${eur.format(PRICING.van.minimumFare)}. Le prix affiché avant la réservation est celui que vous payez.`,
+      "Le prix dépend de la distance routière réelle de votre trajet (Google Maps). Il s'affiche avant la réservation et c'est celui que vous payez : pas de supplément nuit, week-end ou bagages.",
     ],
     [
       "Puis-je annuler ma réservation ?",

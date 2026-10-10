@@ -79,7 +79,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "TaxiDriveFirst — Chauffeur privé à Paris, prix au kilomètre" },
+      { title: "TaxiDriveFirst — Chauffeur privé à Paris, prix fixe annoncé d'avance" },
       {
         name: "description",
         content:
@@ -88,7 +88,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "TaxiDriveFirst — Réservation en ligne" },
       {
         property: "og:description",
-        content: "Votre prix en direct, au kilomètre près. Van Mercedes Classe V, 24h/24.",
+        content: "Votre prix fixe en direct, avant de réserver. Van Mercedes Classe V, 24h/24.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

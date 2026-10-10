@@ -7,7 +7,7 @@ export const SITE = {
   name: "TaxiDriveFirst",
   phoneDisplay: "06 17 98 59 43",
   phoneHref: "tel:+33617985943",
-  email: "contact@exemple.fr",
+  email: "taxisdrivefirst@yahoo.com",
 };
 
 export function LogoWord({ style }: { style?: React.CSSProperties }) {

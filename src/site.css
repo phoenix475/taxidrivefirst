@@ -236,17 +236,11 @@
 .tdf .specs dd.num { font-weight: 500; }
 .tdf .fleet-visual { background: radial-gradient(ellipse at 50% 85%, rgba(233,162,59,0.16), transparent 60%), var(--surface);
   border: 1px solid var(--line); border-radius: 20px;
-  padding: 40px 28px; display: flex; flex-direction: column; justify-content: center; gap: 18px;
+  padding: 16px 16px 24px; display: flex; flex-direction: column; justify-content: center; gap: 18px;
   min-height: 320px; }
-.tdf .fleet-visual svg { width: 100%; height: auto; max-width: 100%; }
+.tdf .fleet-photo { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 12px; }
 .tdf .fleet-extras { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 .tdf .fleet-extras span { font-size: 0.78rem; border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; color: var(--muted); }
-.tdf .car-draw path, .tdf .car-draw circle, .tdf .car-draw line { transition: opacity .4s; }
-@keyframes draw { from { stroke-dashoffset: 1200; } to { stroke-dashoffset: 0; } }
-.tdf .car-draw .body { stroke-dasharray: 1200; animation: draw 1.6s cubic-bezier(.6,0,.2,1) both; }
-@media (prefers-reduced-motion: reduce) {
-  .tdf .car-draw .body { animation: none; stroke-dasharray: none; }
-}
 .tdf .steps { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 0; border-top: 1px solid var(--line); }
 @media (max-width: 900px) {
   .tdf .steps { grid-template-columns: repeat(2, minmax(0,1fr)); }

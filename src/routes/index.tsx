@@ -684,16 +684,6 @@ function Tarifs({ onPick }: { onPick: (from: string, to: string) => void }) {
 }
 
 /* -------------------- FLOTTE -------------------- */
-const VAN_SHAPE = {
-  body: "M20 104 L20 74 Q22 62 40 56 L70 46 Q86 26 112 22 L352 22 Q376 22 380 42 L384 104",
-  win: [
-    "M92 50 Q100 32 118 30 L170 30 L170 50 Z",
-    "M178 30 L250 30 L250 50 L178 50 Z",
-    "M258 30 L340 30 Q360 30 362 44 L362 50 L258 50 Z",
-  ],
-  wheels: [100, 316],
-};
-
 function Flotte() {
   return (
     <section className="band" id="flotte">
@@ -727,36 +717,18 @@ function Flotte() {
           </div>
         </div>
         <div className="fleet-visual">
-          <svg className="car-draw" viewBox="0 0 410 140" role="img" aria-label="Silhouette du van">
-            <ellipse cx="205" cy="128" rx="190" ry="6" fill="#000" fillOpacity=".45" />
-            <path
-              className="body"
-              d={`${VAN_SHAPE.body} Z`}
-              fill="#1B212A"
-              stroke="#ECE6DA"
-              strokeWidth="2"
-              strokeLinejoin="round"
+          <picture>
+            <source srcSet="/van-mercedes-classe-v.webp" type="image/webp" />
+            <img
+              className="fleet-photo"
+              src="/van-mercedes-classe-v.jpg"
+              alt="Van Mercedes Classe V noir TaxiDriveFirst"
+              width={1400}
+              height={934}
+              loading="lazy"
+              decoding="async"
             />
-            {VAN_SHAPE.win.map((w) => (
-              <path
-                key={w}
-                d={w}
-                fill="#E9A23B"
-                fillOpacity=".14"
-                stroke="#E9A23B"
-                strokeOpacity=".6"
-                strokeWidth="1.2"
-              />
-            ))}
-            <line x1="40" y1="88" x2="370" y2="88" stroke="#ECE6DA" strokeOpacity=".18" />
-            <path d="M370 76 L384 78" stroke="#E9A23B" strokeWidth="4" strokeLinecap="round" />
-            {VAN_SHAPE.wheels.map((x) => (
-              <g key={x}>
-                <circle cx={x} cy="104" r="22" fill="#141920" stroke="#ECE6DA" strokeWidth="2" />
-                <circle cx={x} cy="104" r="9" fill="none" stroke="#E9A23B" strokeWidth="1.5" />
-              </g>
-            ))}
-          </svg>
+          </picture>
           <div className="fleet-extras">
             {VAN.extras.map((x) => (
               <span key={x}>{x}</span>

@@ -1,0 +1,17 @@
+# Render (offre gratuite) endort le site après 15 min sans visite : le visiteur
+# suivant tombe sur la page d'attente Render pendant ~1 min. Ce ping régulier
+# le garde éveillé. GitHub peut retarder un peu les crons, d'où l'intervalle court.
+name: Keep alive
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Ping taxidrivefirst.fr
+        run: curl -fsS --retry 3 --retry-delay 10 --max-time 90 https://taxidrivefirst.fr/api/health

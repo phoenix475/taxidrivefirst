@@ -15,6 +15,7 @@ import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe-webhook'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 
 const ReservationConfirmeeRoute = ReservationConfirmeeRouteImport.update({
@@ -47,6 +48,11 @@ const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   path: '/api/stripe-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin/login',
   path: '/admin/login',
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/mentions-legales': typeof MentionsLegalesRoute
   '/reservation-confirmee': typeof ReservationConfirmeeRoute
   '/admin/login': typeof AdminLoginRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/admin/': typeof AdminIndexRoute
 }
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/mentions-legales': typeof MentionsLegalesRoute
   '/reservation-confirmee': typeof ReservationConfirmeeRoute
   '/admin/login': typeof AdminLoginRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/admin': typeof AdminIndexRoute
 }
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/mentions-legales': typeof MentionsLegalesRoute
   '/reservation-confirmee': typeof ReservationConfirmeeRoute
   '/admin/login': typeof AdminLoginRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/admin/': typeof AdminIndexRoute
 }
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/mentions-legales'
     | '/reservation-confirmee'
     | '/admin/login'
+    | '/api/health'
     | '/api/stripe-webhook'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/mentions-legales'
     | '/reservation-confirmee'
     | '/admin/login'
+    | '/api/health'
     | '/api/stripe-webhook'
     | '/admin'
   id:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/mentions-legales'
     | '/reservation-confirmee'
     | '/admin/login'
+    | '/api/health'
     | '/api/stripe-webhook'
     | '/admin/'
   fileRoutesById: FileRoutesById
@@ -117,6 +129,7 @@ export interface RootRouteChildren {
   MentionsLegalesRoute: typeof MentionsLegalesRoute
   ReservationConfirmeeRoute: typeof ReservationConfirmeeRoute
   AdminLoginRoute: typeof AdminLoginRoute
+  ApiHealthRoute: typeof ApiHealthRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -165,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiStripeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/login': {
       id: '/admin/login'
       path: '/admin/login'
@@ -181,6 +201,7 @@ const rootRouteChildren: RootRouteChildren = {
   MentionsLegalesRoute: MentionsLegalesRoute,
   ReservationConfirmeeRoute: ReservationConfirmeeRoute,
   AdminLoginRoute: AdminLoginRoute,
+  ApiHealthRoute: ApiHealthRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   AdminIndexRoute: AdminIndexRoute,
 }

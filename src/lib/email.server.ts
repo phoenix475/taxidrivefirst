@@ -16,7 +16,7 @@ function getSiteUrl(): string {
   return process.env.SITE_URL || "https://taxidrivefirst.fr";
 }
 
-export async function sendReservationNotificationEmail(reservation: {
+type ReservationNotification = {
   id: string;
   full_name: string;
   phone: string;
@@ -33,7 +33,16 @@ export async function sendReservationNotificationEmail(reservation: {
   // cash : paiement sur place. online_pending : le client vient d'être envoyé
   // sur Stripe (pas encore payé). online_paid : Stripe a confirmé le paiement.
   payment: "cash" | "online_pending" | "online_paid";
-}): Promise<void> {
+};
+
+// Requête FormSubmit prête à envoyer. FormSubmit bloque les appels venant des
+// serveurs Render (403) : pour une réservation, c'est le navigateur du client
+// qui l'envoie (voir sendNotificationFromBrowser dans routes/index.tsx).
+export type NotificationRequest = { url: string; fields: Record<string, string> };
+
+export function buildReservationNotification(
+  reservation: ReservationNotification,
+): NotificationRequest {
   const formatDate = (value: string) =>
     new Date(value).toLocaleString("fr-FR", {
       dateStyle: "full",
@@ -80,19 +89,27 @@ export async function sendReservationNotificationEmail(reservation: {
   if (reservation.return_at) fields.Retour = formatDate(reservation.return_at);
   if (reservation.notes) fields.Remarques = reservation.notes;
 
-  const response = await fetch(
-    `https://formsubmit.co/ajax/${encodeURIComponent(getNotificationEmail())}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        Origin: siteUrl,
-        Referer: `${siteUrl}/`,
-      },
-      body: JSON.stringify(fields),
+  return {
+    url: `https://formsubmit.co/ajax/${encodeURIComponent(getNotificationEmail())}`,
+    fields,
+  };
+}
+
+export async function sendReservationNotificationEmail(
+  reservation: ReservationNotification,
+): Promise<void> {
+  const { url, fields } = buildReservationNotification(reservation);
+  const siteUrl = getSiteUrl();
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Origin: siteUrl,
+      Referer: `${siteUrl}/`,
     },
-  );
+    body: JSON.stringify(fields),
+  });
 
   const json = await response.json().catch(() => null);
   // FormSubmit répond 200 même en cas d'échec : le vrai résultat est dans `success`.

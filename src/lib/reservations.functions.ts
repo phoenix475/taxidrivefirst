@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 
+import type { NotificationRequest } from "@/lib/email.server";
 import { calculatePrice } from "@/lib/pricing";
 import { enforceRateLimit } from "@/lib/rate-limit.server";
 
@@ -78,28 +79,32 @@ export const createReservation = createServerFn({ method: "POST" })
     }
 
     // Le chauffeur est prévenu de chaque réservation, quel que soit le mode de
-    // paiement — sinon il ne peut pas l'organiser.
-    const { sendReservationNotificationEmail } = await import("@/lib/email.server");
-    await sendReservationNotificationEmail({
-      id: row.id,
-      full_name: data.full_name,
-      phone: data.phone,
-      pickup_address: data.pickup_address,
-      dropoff_address: data.dropoff_address,
-      pickup_at: data.pickup_at,
-      trip_type: data.trip_type,
-      passengers: data.passengers,
-      luggage: data.luggage,
-      notes: data.notes,
-      distance_km: distanceKm,
-      priceEuros,
-      payment: data.payment_method === "cash" ? "cash" : "online_pending",
-    }).catch((emailError) => {
-      console.error("sendReservationNotificationEmail error", emailError);
-    });
+    // paiement — sinon il ne peut pas l'organiser. L'email est préparé ici mais
+    // envoyé par le navigateur : FormSubmit refuse les appels des serveurs Render.
+    const { buildReservationNotification } = await import("@/lib/email.server");
+    let notification: NotificationRequest | null = null;
+    try {
+      notification = buildReservationNotification({
+        id: row.id,
+        full_name: data.full_name,
+        phone: data.phone,
+        pickup_address: data.pickup_address,
+        dropoff_address: data.dropoff_address,
+        pickup_at: data.pickup_at,
+        trip_type: data.trip_type,
+        passengers: data.passengers,
+        luggage: data.luggage,
+        notes: data.notes,
+        distance_km: distanceKm,
+        priceEuros,
+        payment: data.payment_method === "cash" ? "cash" : "online_pending",
+      });
+    } catch (emailError) {
+      console.error("buildReservationNotification error", emailError);
+    }
 
     if (data.payment_method === "cash") {
-      return { id: row.id, checkoutUrl: null as string | null };
+      return { id: row.id, checkoutUrl: null as string | null, notification };
     }
 
     const { createCheckoutSession } = await import("@/lib/stripe.server");
@@ -114,7 +119,7 @@ export const createReservation = createServerFn({ method: "POST" })
 
     await sql`UPDATE reservations SET stripe_session_id = ${checkout.id} WHERE id = ${row.id}`;
 
-    return { id: row.id, checkoutUrl: checkout.url };
+    return { id: row.id, checkoutUrl: checkout.url, notification };
   });
 
 // Résumé public (non sensible) d'une réservation, utilisé par la page

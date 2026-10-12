@@ -151,6 +151,27 @@ function Home() {
 
 /* -------------------- CONSOLE CARTE + RÉSERVATION -------------------- */
 
+// Email au chauffeur, envoyé depuis le navigateur : FormSubmit bloque les
+// appels venant des serveurs Render. Un échec ne bloque pas la réservation,
+// qui est déjà enregistrée (visible dans /admin).
+async function sendNotificationFromBrowser(notification: {
+  url: string;
+  fields: Record<string, string>;
+}) {
+  try {
+    const response = await fetch(notification.url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(notification.fields),
+      signal: AbortSignal.timeout(8000),
+    });
+    const json = await response.json().catch(() => null);
+    if (String(json?.success) !== "true") console.error("FormSubmit error", response.status, json);
+  } catch (err) {
+    console.error("FormSubmit error", err);
+  }
+}
+
 type Coords = { lat: number; lng: number };
 
 // Entrée sert à choisir une suggestion Google, pas à valider le formulaire
@@ -330,6 +351,7 @@ function BookingConsole({ preset }: { preset: { from: Place; to: Place; n: numbe
           dropoff_lng: dropoffCoords?.lng ?? null,
         },
       });
+      if (res.notification) await sendNotificationFromBrowser(res.notification);
       if (res.checkoutUrl) {
         window.location.href = res.checkoutUrl;
         return;

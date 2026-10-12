@@ -151,7 +151,6 @@ function Home() {
 
 /* -------------------- CONSOLE CARTE + RÉSERVATION -------------------- */
 
-type PaymentMethod = "cash" | "online";
 type Coords = { lat: number; lng: number };
 
 // Entrée sert à choisir une suggestion Google, pas à valider le formulaire
@@ -187,7 +186,6 @@ function BookingConsole({ preset }: { preset: { from: Place; to: Place; n: numbe
   const [time, setTime] = useState("08:30");
   const [passengers, setPassengers] = useState(2);
   const [luggage, setLuggage] = useState(2);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -325,7 +323,7 @@ function BookingConsole({ preset }: { preset: { from: Place; to: Place; n: numbe
           full_name: fullName,
           phone,
           notes: notes || null,
-          payment_method: paymentMethod,
+          payment_method: "cash",
           pickup_lat: pickupCoords?.lat ?? null,
           pickup_lng: pickupCoords?.lng ?? null,
           dropoff_lat: dropoffCoords?.lat ?? null,
@@ -568,23 +566,6 @@ function BookingConsole({ preset }: { preset: { from: Place; to: Place; n: numbe
                 placeholder="Siège enfant, skis, poussette…"
               />
             </div>
-            <fieldset className="pay">
-              <legend className="legend">Paiement</legend>
-              <button
-                type="button"
-                aria-pressed={paymentMethod === "cash"}
-                onClick={() => setPaymentMethod("cash")}
-              >
-                Payer à bord
-              </button>
-              <button
-                type="button"
-                aria-pressed={paymentMethod === "online"}
-                onClick={() => setPaymentMethod("online")}
-              >
-                Payer en ligne
-              </button>
-            </fieldset>
           </>
         )}
 
@@ -600,11 +581,7 @@ function BookingConsole({ preset }: { preset: { from: Place; to: Place; n: numbe
               ← Retour
             </button>
             <button type="submit" className="btn btn-amber" disabled={loading}>
-              {loading
-                ? "Envoi…"
-                : paymentMethod === "online"
-                  ? `Payer ${price != null ? eur.format(price) : ""}`
-                  : `Réserver · ${price != null ? eur.format(price) : ""}`}
+              {loading ? "Envoi…" : `Réserver · ${price != null ? eur.format(price) : ""}`}
             </button>
           </div>
         )}
@@ -752,7 +729,7 @@ function Deroule() {
       "Prise en charge",
       "À l'aéroport, accueil en zone arrivées avec une pancarte. Votre vol est suivi en temps réel.",
     ],
-    ["Paiement", "À bord, ou en ligne par carte au moment de la réservation."],
+    ["Paiement", "À bord, directement auprès du chauffeur."],
   ];
   return (
     <section className="band">

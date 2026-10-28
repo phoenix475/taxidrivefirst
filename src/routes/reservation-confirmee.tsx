@@ -37,7 +37,20 @@ function ReservationConfirmee() {
       return;
     }
     getSummary({ data: { id: ref } })
-      .then((row) => setSummary(row))
+      .then((row) => {
+        setSummary(row);
+        // Conversion Google Ads ; transaction_id = ref pour ne compter qu'une
+        // fois la même réservation si la page est rechargée.
+        const gtag = (window as { gtag?: (...args: unknown[]) => void }).gtag;
+        gtag?.("event", "conversion", {
+          send_to: "AW-348345040/6LabCNDozKwdENCljaYB",
+          transaction_id: ref,
+          ...(row.estimated_price_cents != null && {
+            value: row.estimated_price_cents / 100,
+            currency: "EUR",
+          }),
+        });
+      })
       .catch(() => setNotFound(true));
   }, [ref]);
 
